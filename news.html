@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>千山健康</title>
+    <meta name="description" content="湖南千山慢病健康管理有限公司由上市公司湖南千山制药机械股份有限公司（股票代码：300216）投资，成立于2015年12月，注册资金1.723亿元，位于长沙经济技术开发区盼盼路9号。主营慢病精准管理与服务平台，利用个体化用药基因检测技术、可穿戴医疗设备技术、远程医疗、慢病管理标准化服务流程模式，为患者找到最佳“慢病管理整体解决方案”，探索慢病精准医疗发展新模式。">
+    <meta name="keywords" content="千山降压，慢病健康管理，基因检测，血压管理，远程问诊，高危保护，关爱家人，降压社区">
+    <link rel="Shortcut Icon" href="favicon.ico">
+    <link href="src/css/bootstrap.min.css" rel="stylesheet">
+    <link href="src/css/swiper.min.css" rel="stylesheet">
+    <link href="src/css/website.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+    <script src="src/js/lib/html5shiv.min.js"></script>
+    <script src="src/js/lib/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+<body class="news-page">
+<div class="header">
+    <header class="header-wrap">
+        <div class="container clearfix">
+            <div class="logo"></div>
+            <div class="nav-div">
+                <a href="./index.html"><span data-title="HOME">首页</span></a>
+                <a href="./news.html" class="active"><span data-title="NEWS">新闻动态</span></a>
+                <a href="./products.html"><span data-title="PRODUCTS">产品中心</span></a>
+                <a href="./recruit.html"><span data-title="RECRUIT">招贤纳士</span></a>
+                <a href="./about.html"><span data-title="ABOUT">关于我们</span></a>
+            </div>
+        </div>
+    </header>
+</div>
+<div class="page-con-wrap">
+    <section class="common-banner"></section>
+    <section class="news-crumbs">
+        <p class="container crumbs-p">您的位置：
+            <a href="index.html">首页</a>
+            > <span class="red">新闻动态</span></p>
+    </section>
+    <section class="category-nav">
+        <ul class="container category-nav-ul clearfix" id="categoryNavUl">
+        </ul>
+    </section>
+    <section class="news-list-section clearfix">
+        <ul class="news-item-wrap" id="newsIndexList">
+            <!--<li class="news-item">
+                <div class="container">
+                    <div class="left-date-wrap">
+                        <div class="big">02/02</div>
+                        <div class="small">2017</div>
+                    </div>
+                    <div class="center-news-div">
+                        <a href="/news/3" class="news-title" target="_blank">新闻标题...</a>
+                        <p class="news-desc">新闻内容...</p>
+                    </div>
+                    <div class="right-control"></div>
+                </div>
+            </li>-->
+        </ul>
+    </section>
+    <!--分页-->
+    <div class="pagination-wrap clearfix">
+        <div class="pager" id="J_Pagination"></div>
+        <input type="hidden" id="pages" value="1">
+        <input type="hidden" id="totalPage" value="">
+    </div>
+    <!--分页结束-->
+</div>
+<div class="footer">
+    <div class="container clearfix">
+        <div class="left-con">
+            <ul class="link-div">
+                <li><a href="./news.html">新闻动态</a></li>
+                <li><a href="./products.html">产品中心</a></li>
+                <li><a href="./recruit.html">招贤纳士</a></li>
+                <li><a href="./about.html">关于我们</a></li>
+            </ul>
+            <div class="footer-other">
+                <p class="fs15">湖南千山慢病健康管理有限公司</p>
+                <p class="fs12">地址：湖南长沙经济技术开发区人民东路与东七路十字交汇处</p>
+                <p class="fs12">Copyright © 2016,chinasunhealth Co., Ltd. All rights reserved.</p>
+                <p class="fs12">备案号： 湘ICP备15017469号-4</p>
+            </div>
+        </div>
+        <div class="right-con">
+            <div class="qr-code">
+                <span class="img"></span>
+            </div>
+            <div class="telephone">
+                <p class="fs12">服务电话</p>
+                <p class="fs12">24小时全国服务热线</p>
+                <p class="fs-telephone">400-160-0123</p>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/template" id="listTpl">
+    <% _.each(datas,function(data){ %>
+    <div class="news-item">
+        <div class="container">
+            <div class="left-date-wrap">
+                <div class="big"><%= item.createTime %></div>
+                <div class="small"><%= item.createTime %></div>
+            </div>
+            <div class="center-news-div">
+                <a href="/news/<%= data.id %>" class="news-title" target="_blank"><%= item.title %></a>
+                <p class="news-desc"><%= {{item.descr %></p>
+            </div>
+            <div class="right-control"></div>
+        </div>
+    </div>
+    <% }) %>
+</script>
+
+<script src="./src/js/require.js"></script>
+<script src="./src/js/main.js"></script>
+<script>
+    require(['jquery','q','underscore'],function($,Q,_){
+        var newsType = '-1'
+
+        var formatterSerialize= function (str) {
+            var str = str.split("&");
+            var newOb = {}
+            for (var i = 0; i < str.length; i++) {
+                var item = str[i].split("=");
+                newOb[item[0]] = item[1]
+            }
+            return newOb;
+        };
+
+        var funOb = {
+            initData:function(){
+                $.ajax({
+                    url: ROOT_PATH+"officialWebsite/allNewsType",
+                    dataType:'jsonp',
+                    jsonp:"callback",
+                    jsonpCallback:"getNewsTypeCallback",
+                    data: {},
+                    success:function(data){
+                        if(data.status){
+                            var html = '<li data-id="-1"><span>全部</span></li>';
+                            for(var i=0;i<data.newsTypes.length;i++){
+                                var datai = data.newsTypes[i];
+                                html += '<li data-id="'+datai.id+'"><span>'+datai.typeName+'</span></li>'
+                            }
+                            $('#categoryNavUl').html(html);
+                        }
+                    }
+                })
+            },
+            initControl:function(){
+                $(document).on('click','#categoryNavUl > li > span',function(){
+                    newsType = $(this).parent().attr('data-id');
+                    funOb.changeUrl(1)
+                })
+            },
+            onQ:function(){
+                Q.reg(/singlePage\/\?(.*)/, function (paraStr) { //正则表达式注册URL，访问匹配该正则表达式的URL时，就会触发回调，在回调中我们修改页面DOM实现无刷新变换内容，para为查询参数字符串
+                    var tempData = formatterSerialize(paraStr);
+                    $.ajax({
+                        url: ROOT_PATH+"officialWebsite/newsList",
+                        dataType:'jsonp',
+                        jsonp:"callback",
+                        jsonpCallback:"getNewsListCallback",
+                        data: tempData,
+                        success: function (data) {
+                            console.log(data)
+                            if (data.status) {
+                                /*if (data.dataList.length>0) {  //模板展示新闻数据
+                                    var dataList = data.dataList,tplData=[];
+                                    for(k in dataList){
+                                        if(dataList[k]["state"]==0){
+                                            if(dataList[k]["createTime"]){
+                                                var timestamp4 = new Date(dataList[k]["createTime"]);
+                                                dataList[k]["createTime"]=timestamp4.toLocaleDateString().replace(/\//g, "-");//moment(tplData[k]["createTime"]).format('YYYY.MM.DD')
+                                            }
+                                            if(dataList[k]["descr"]){
+                                                if($("body").width()>=1200){
+                                                    dataList[k]["descr"]=str_substr(dataList[k]["descr"],240);
+                                                }else if($("body").width()>=992 && $("body").width()<1200){
+                                                    dataList[k]["descr"]=str_substr(dataList[k]["descr"],180);
+                                                }
+                                            }
+                                            tplData.push(dataList[k]);
+                                        }
+                                    }
+                                    var tpl = _.template($("#listTpl").html());
+                                    $("#newsList").html(tpl({"datas": tplData}));
+                                    $("body,html").scrollTop(0);
+                                    $('.img-box').find('img').load(function(){
+                                        doImgList($(this));
+                                    });
+                                    funOb.renderPagination(data);  //展示分页数据
+                                } else{
+                                    $("#newsList").html("<div style='text-align: center;padding:100px 0 0;color:#999;'>暂无内容！</div>");
+                                }
+
+                                $("#newsList").removeClass("data-loading");*/
+                            }
+                        },
+                    })
+                });
+
+                Q.init({
+                    index: 'singlePage/?' + $.param({"pageNum":'1',"pageSize": 6,"newsType": -1}) //首页地址
+                });
+            },
+            initPaginationControl: function () {
+
+            },
+            changeUrl: function (pageNum) {  //改变URL，触发Q.js回调函数
+                var dataOb = { //收集查询参数
+                    "pageNum": $("#pages").val(),  //页码
+                    "pageSize": 6, //每页条数
+                    "newsType": newsType
+                };
+                dataOb.pageNum = pageNum;
+                var urlStr = "singlePage/?" + $.param(dataOb);
+                Q.go(urlStr);
+            },
+            renderPagination: function (data) {
+                var pageNum,
+                    currentPage = data.currentPage,
+                    totalPage = data.totalPage;
+
+                if (currentPage > totalPage) {//当前页码大于总页码
+                    $("#pages").val(totalPage);
+                    funOb.changeUrl(totalPage);
+                } else {
+                    $("#pages").val(currentPage);
+                }
+
+                $("#totalPage").val(totalPage);
+
+                //加载页码
+                funOb.pageLoad(currentPage, totalPage);
+
+                //绑定事件
+                //点击首页，上一页，下一页，首页， 尾页，查询分页数据
+                $('#J_Pagination').on('click', '.page-item', function () {
+                    var pNum = parseInt($(this).text());
+                    funOb.changeUrl(pNum);
+                }).on('click', '#firstPage', function () {
+                    funOb.changeUrl(1);
+                }).on('click', '#prevPage', function () {
+                    if (currentPage != "" && currentPage > 1) {
+                        pageNum = currentPage - 1;
+                        funOb.changeUrl(pageNum);
+                    }
+                }).on('click', '#nextPage', function () {
+                    if (currentPage != "" && currentPage < totalPage) {
+                        pageNum = currentPage + 1;
+                        funOb.changeUrl(pageNum);
+                    }
+                }).on('click', '#lastPage', function () {
+                    funOb.changeUrl(parseInt($("#totalPage").val()));
+                })
+            },
+            pageLoad: function (curPage, totalPage) {//分页加载
+                var maxNum = 10,//页码显示个数
+                    prevNum = 2,//当前页之前页码的显示数
+                    nextNum = maxNum - prevNum - 1,//当前页之后页码的显示数
+                    pageHtml = '';
+                if (curPage > 1) {
+                    pageHtml += '<a id="firstPage" href="javascript:;">首页</a><a id="prevPage" href="javascript:;">上一页</a>';
+                }
+                for (var i = 1; i <= totalPage; i++) {
+                    if (i == curPage) {//当前页码
+                        pageHtml += '<b>' + i + '</b>';
+                    } else {
+                        if (totalPage > maxNum) {//总页码数大于最大显示数
+                            if (curPage <= prevNum && i <= maxNum) {//当前页之后的页码补全至最大显示数
+                                pageHtml += '<a class="page-item" href="javascript:void(0)" >' + i + '</a>';
+                            } else if (totalPage - curPage < nextNum && i >= totalPage - maxNum + 1) {//当前页之前的页码补全至最大显示数
+                                pageHtml += '<a class="page-item" href="javascript:void(0)" >' + i + '</a>';
+                            } else if ((i < curPage && i >= curPage - prevNum) || i > curPage && i <= nextNum + curPage) {//按配置输出当前页的前后页码
+                                pageHtml += '<a class="page-item" href="javascript:void(0)" >' + i + '</a>';
+                            }
+                        } else {//总页码数小于等于最大显示数时，输出所有页码
+                            pageHtml += '<a class="page-item" href="javascript:void(0)" >' + i + '</a>';
+                        }
+                    }
+                }
+                if (totalPage > curPage) {
+                    pageHtml += '<a id="nextPage" href="javascript:;">下一页</a><a id="lastPage" href="javascript:;">尾页</a>';
+                }
+                $('#J_Pagination').html(pageHtml);
+            },
+        }
+
+        funOb.initData()
+        funOb.initControl()
+        funOb.onQ()
+    })
+</script>
+</body>
+</html>
