@@ -42,29 +42,16 @@
         </ul>
     </section>
     <section class="news-list-section clearfix">
-        <ul class="news-item-wrap" id="newsIndexList">
-            <!--<li class="news-item">
-                <div class="container">
-                    <div class="left-date-wrap">
-                        <div class="big">02/02</div>
-                        <div class="small">2017</div>
-                    </div>
-                    <div class="center-news-div">
-                        <a href="/news/3" class="news-title" target="_blank">新闻标题...</a>
-                        <p class="news-desc">新闻内容...</p>
-                    </div>
-                    <div class="right-control"></div>
-                </div>
-            </li>-->
+        <ul class="news-item-wrap data-loading" id="newsIndexList">
         </ul>
     </section>
-    <!--分页-->
-    <div class="pagination-wrap clearfix">
-        <div class="pager" id="J_Pagination"></div>
-        <input type="hidden" id="pages" value="1">
-        <input type="hidden" id="totalPage" value="">
-    </div>
-    <!--分页结束-->
+    <section class="pagination-section">
+        <div class="pagination-wrap clearfix">
+            <div class="pager pagination" id="J_Pagination"></div>
+            <input type="hidden" id="pages" value="1">
+            <input type="hidden" id="totalPage" value="">
+        </div>
+    </section>
 </div>
 <div class="footer">
     <div class="container clearfix">
@@ -99,12 +86,12 @@
     <div class="news-item">
         <div class="container">
             <div class="left-date-wrap">
-                <div class="big"><%= item.createTime %></div>
-                <div class="small"><%= item.createTime %></div>
+                <div class="big"><%= data.createTimeY %></div>
+                <div class="small"><%= data.createTimeMD %></div>
             </div>
             <div class="center-news-div">
-                <a href="/news/<%= data.id %>" class="news-title" target="_blank"><%= item.title %></a>
-                <p class="news-desc"><%= {{item.descr %></p>
+                <a href="news-detail.html?id=<%= data.id %>&type=5" class="news-title" target="_blank"><%= data.title %></a>
+                <p class="news-desc"><%= data.descr %></p>
             </div>
             <div class="right-control"></div>
         </div>
@@ -115,10 +102,14 @@
 <script src="./src/js/require.js"></script>
 <script src="./src/js/main.js"></script>
 <script>
-    require(['jquery','q','underscore'],function($,Q,_){
+    require(['jquery','q','underscore','common'],function(){
+        var $ = require('jquery');
+        var Q=require('q');
+        var _=require('underscore');
+
         var newsType = '-1'
 
-        var formatterSerialize= function (str) {
+        var formatterSerialize = function (str) {
             var str = str.split("&");
             var newOb = {}
             for (var i = 0; i < str.length; i++) {
@@ -127,24 +118,65 @@
             }
             return newOb;
         };
+        var formatterDateZg = function (d) {
+            var datetime;
+            if(d!=null && d!=""){
+                var date = new Date(d);
+                datetime = date.getFullYear() + "-" // "年"
+                    + ((date.getMonth() + 1) >= 10 ? (date.getMonth() + 1) : "0" + (date.getMonth() + 1)) + "-" // "月"
+                    + (date.getDate() < 10 ? "0" + date.getDate() : date.getDate());
+            }else{
+                datetime="";
+            }
+            return datetime;
+        };
+
+        var realLength=function (str) {
+            return str.replace(/[^\x00-\xff]/g, "**").length; // [^\x00-\xff] - 匹配非双字节的字符
+        }
+
+        var str_substr = function (currentVal,maxleng) {
+            var len = 0;
+            for (var i = 0; i < currentVal.length; i++) {
+                var a = currentVal.charAt(i);
+                if (a.match(/[^\x00-\xff]/ig) != null) {
+                    len += 2;
+                }
+                else {
+                    len += 1;
+                }
+            }
+            if(len>maxleng)
+            {
+                var m=Math.floor(currentVal.length*0.5)
+                for(var i=m;i<currentVal.length;i++) {
+                    var curV = realLength(currentVal.substr(0, i));
+                    if (curV >= maxleng) {
+                        return currentVal.substr(0, i)+"......";
+                    }
+                }
+            }
+            return currentVal;
+        };
 
         var funOb = {
             initData:function(){
-                $.ajax({
+                var ajaxA = $.ajax({
                     url: ROOT_PATH+"officialWebsite/allNewsType",
                     dataType:'jsonp',
                     jsonp:"callback",
                     jsonpCallback:"getNewsTypeCallback",
                     data: {},
-                    success:function(data){
-                        if(data.status){
-                            var html = '<li data-id="-1"><span>全部</span></li>';
-                            for(var i=0;i<data.newsTypes.length;i++){
-                                var datai = data.newsTypes[i];
-                                html += '<li data-id="'+datai.id+'"><span>'+datai.typeName+'</span></li>'
-                            }
-                            $('#categoryNavUl').html(html);
+                })
+                $.when(ajaxA).done(function(data){
+                    if(data.status){
+                        var html = '<li data-id="-1"><span>全部</span></li>';
+                        for(var i=0;i<data.newsTypes.length;i++){
+                            var datai = data.newsTypes[i];
+                            html += '<li data-id="'+datai.id+'"><span>'+datai.typeName+'</span></li>'
                         }
+                        $('#categoryNavUl').html(html);
+                        funOb.onQ()
                     }
                 })
             },
@@ -157,6 +189,10 @@
             onQ:function(){
                 Q.reg(/singlePage\/\?(.*)/, function (paraStr) { //正则表达式注册URL，访问匹配该正则表达式的URL时，就会触发回调，在回调中我们修改页面DOM实现无刷新变换内容，para为查询参数字符串
                     var tempData = formatterSerialize(paraStr);
+                    if(tempData.hasOwnProperty("t")){
+                        delete tempData["t"];
+                    }
+                    funOb.onSetParam(tempData); //根据url参数设置UI界面
                     $.ajax({
                         url: ROOT_PATH+"officialWebsite/newsList",
                         dataType:'jsonp',
@@ -164,58 +200,65 @@
                         jsonpCallback:"getNewsListCallback",
                         data: tempData,
                         success: function (data) {
-                            console.log(data)
                             if (data.status) {
-                                /*if (data.dataList.length>0) {  //模板展示新闻数据
-                                    var dataList = data.dataList,tplData=[];
-                                    for(k in dataList){
-                                        if(dataList[k]["state"]==0){
-                                            if(dataList[k]["createTime"]){
-                                                var timestamp4 = new Date(dataList[k]["createTime"]);
-                                                dataList[k]["createTime"]=timestamp4.toLocaleDateString().replace(/\//g, "-");//moment(tplData[k]["createTime"]).format('YYYY.MM.DD')
+                                var dataList = data.dataList,tplData=$.extend([],dataList);
+                                if(tplData.length>0){
+                                    for(k in tplData){
+                                        if(tplData[k]["createTime"]){
+                                            tplData[k]["createTimeY"] = formatterDateZg(dataList[k]["createTime"]).split('-')[0]
+                                            tplData[k]["createTimeMD"] = formatterDateZg(dataList[k]["createTime"]).split('-')[1] + '-' + formatterDateZg(dataList[k]["createTime"]).split('-')[2]
+                                        }
+                                        if(tplData[k]["descr"]){
+                                            if($("body").width()>=1200){
+                                                tplData[k]["descr"]=str_substr(tplData[k]["descr"],240);
+                                            }else if($("body").width()>=992 && $("body").width()<1200){
+                                                tplData[k]["descr"]=str_substr(tplData[k]["descr"],180);
                                             }
-                                            if(dataList[k]["descr"]){
-                                                if($("body").width()>=1200){
-                                                    dataList[k]["descr"]=str_substr(dataList[k]["descr"],240);
-                                                }else if($("body").width()>=992 && $("body").width()<1200){
-                                                    dataList[k]["descr"]=str_substr(dataList[k]["descr"],180);
-                                                }
-                                            }
-                                            tplData.push(dataList[k]);
                                         }
                                     }
                                     var tpl = _.template($("#listTpl").html());
-                                    $("#newsList").html(tpl({"datas": tplData}));
-                                    $("body,html").scrollTop(0);
-                                    $('.img-box').find('img').load(function(){
-                                        doImgList($(this));
-                                    });
-                                    funOb.renderPagination(data);  //展示分页数据
-                                } else{
-                                    $("#newsList").html("<div style='text-align: center;padding:100px 0 0;color:#999;'>暂无内容！</div>");
+                                    $("#newsIndexList").html(tpl({"datas": tplData}));
+                                    $("body,html").scrollTop(0)
+                                }else if(tplData.length==0){
+                                    $("#newsIndexList").html("<div style='text-align: center;padding:100px 0 0;color:#999;'>暂无内容！</div>");
                                 }
+                                $("#newsIndexList").removeClass("data-loading")
 
-                                $("#newsList").removeClass("data-loading");*/
+                                funOb.renderPagination(data);  //展示分页数据
                             }
                         },
                     })
                 });
 
                 Q.init({
-                    index: 'singlePage/?' + $.param({"pageNum":'1',"pageSize": 6,"newsType": -1}) //首页地址
+                    index: 'singlePage/?' + $.param({"pageNum":'1',"pageSize": "3","newsType": "-1"}) //首页地址
                 });
+            },
+            onGetParam:function(){
+                var pageNum = $("#pages").val();
+                var dataOb = {
+                    "pageNum":pageNum,
+                    "pageSize":"3",
+                    "newsType":newsType
+                }
+                return dataOb;
+            },
+            onSetParam:function(obj){
+                var liArr = $('#categoryNavUl li');
+                for(var i=0;i<liArr.length;i++){
+                    if($(liArr[i]).attr('data-id')==obj.newsType){
+                        liArr.removeClass('cur')
+                        $(liArr[i]).addClass('cur')
+                    }
+                }
             },
             initPaginationControl: function () {
 
             },
-            changeUrl: function (pageNum) {  //改变URL，触发Q.js回调函数
-                var dataOb = { //收集查询参数
-                    "pageNum": $("#pages").val(),  //页码
-                    "pageSize": 6, //每页条数
-                    "newsType": newsType
-                };
+            changeUrl: function (pageNum,t) {  //改变URL，触发Q.js回调函数
+                var dataOb = funOb.onGetParam();
                 dataOb.pageNum = pageNum;
-                var urlStr = "singlePage/?" + $.param(dataOb);
+                var urlStr = t ? "singlePage/?"+$.param(dataOb)+"&t="+t : "singlePage/?"+$.param(dataOb);
                 Q.go(urlStr);
             },
             renderPagination: function (data) {
@@ -262,11 +305,11 @@
                     nextNum = maxNum - prevNum - 1,//当前页之后页码的显示数
                     pageHtml = '';
                 if (curPage > 1) {
-                    pageHtml += '<a id="firstPage" href="javascript:;">首页</a><a id="prevPage" href="javascript:;">上一页</a>';
+                    pageHtml += '<a id="prevPage" href="javascript:;"> « </a><a id="firstPage" href="javascript:;">首页</a>';
                 }
                 for (var i = 1; i <= totalPage; i++) {
                     if (i == curPage) {//当前页码
-                        pageHtml += '<b>' + i + '</b>';
+                        pageHtml += '<a class="page-item active" href="javascript:void(0)">' + i + '</a>';
                     } else {
                         if (totalPage > maxNum) {//总页码数大于最大显示数
                             if (curPage <= prevNum && i <= maxNum) {//当前页之后的页码补全至最大显示数
@@ -282,7 +325,7 @@
                     }
                 }
                 if (totalPage > curPage) {
-                    pageHtml += '<a id="nextPage" href="javascript:;">下一页</a><a id="lastPage" href="javascript:;">尾页</a>';
+                    pageHtml += '<a id="lastPage" href="javascript:;">尾页</a><a id="nextPage" href="javascript:;"> » </a>';
                 }
                 $('#J_Pagination').html(pageHtml);
             },
@@ -290,7 +333,7 @@
 
         funOb.initData()
         funOb.initControl()
-        funOb.onQ()
+
     })
 </script>
 </body>

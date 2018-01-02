@@ -15,7 +15,7 @@
     <![endif]-->
 
 </head>
-<body>
+<body class="recruit-page">
 <div class="header">
     <header class="header-wrap">
         <div class="container clearfix">
@@ -31,7 +31,36 @@
     </header>
 </div>
 <div class="page-con-wrap">
+    <section class="common-banner"></section>
+    <section class="news-crumbs">
+        <p class="container crumbs-p">您的位置：
+            <a href="index.html">首页</a>
+            > <span class="red">招贤纳士</span></p>
+    </section>
+    <section class="category-nav">
+        <ul class="container category-nav-ul clearfix" id="categoryNavUl">
+        </ul>
+    </section>
+    <section class="recruit-list-section clearfix">
+        <div class="container">
+            <div class="recruit-header-nav clearfix">
+                <div>职位名称</div>
+                <div>职位类别</div>
+                <div>任职方式</div>
+                <div>地点</div>
+            </div>
+            <div class="recruit-body data-loading" id="recruitList">
 
+            </div>
+        </div>
+    </section>
+    <section class="pagination-section">
+        <div class="pagination-wrap clearfix">
+            <div class="pager pagination" id="J_Pagination"></div>
+            <input type="hidden" id="pages" value="1">
+            <input type="hidden" id="totalPage" value="">
+        </div>
+    </section>
 </div>
 <div class="footer">
     <div class="container clearfix">
@@ -61,10 +90,230 @@
         </div>
     </div>
 </div>
+<script type="text/template" id="listTpl">
+    <% _.each(datas,function(data){ %>
+    <dl class="recruit-dl">
+        <dt class="recruit-dt clearfix">
+            <div class="dt-cell"><%= data.quarterName %></div>
+            <div class="dt-cell"><%= data.recruitTypeStr %></div>
+            <div class="dt-cell"><%= data.appointmentMethod %></div>
+            <div class="dt-cell"><%= data.address %></div>
+            <div class="dt-close"></div>
+        </dt>
+        <dd class="recruit-dd">
+            <div class="recruit-dd-div">
+                <div class="dd-cont-head clearfix">
+                    <div class="dd-cont-cell">学历要求：<%= data.educationalRequirements %></div>
+                    <div class="dd-cont-cell">招聘人数：<%= data.number %>人</div>
+                </div>
+                <div class="recruit-desc clearfix">
+                    <div><%= data.jobRequirements %></div>
+                </div>
+                <div class="apply-job">
+                    <a class="btn red-btn btn-size18" href="mailto:tangwenjun@chinasunhealth.com">申请该职位</a>
+                </div>
+            </div>
+        </dd>
+    </dl>
+    <% }) %>
+</script>
 <script src="./src/js/require.js"></script>
 <script src="./src/js/main.js"></script>
 <script>
-    require(['jquery','swiper'],function($,swiper){
+    require(['jquery','q','underscore','common'],function(){
+        var $ = require('jquery');
+        var Q=require('q');
+        var _=require('underscore');
+
+        var recruitType = '-1'
+        var formatterSerialize = function (str) {
+            var str = str.split("&");
+            var newOb = {}
+            for (var i = 0; i < str.length; i++) {
+                var item = str[i].split("=");
+                newOb[item[0]] = item[1]
+            }
+            return newOb;
+        };
+
+        var funOb = {
+            initData:function(){
+                var ajaxA = $.ajax({
+                    url: ROOT_PATH+"officialWebsite/allRecruitType",
+                    dataType:'jsonp',
+                    jsonp:"callback",
+                    jsonpCallback:"getRecruitTypeCallback",
+                    data: {},
+                })
+                $.when(ajaxA).done(function(data){
+                    if(data.status){
+                        var html = '<li data-id="-1"><span>全部</span></li>';
+                        for(var i=0;i<data.recruitTypes.length;i++){
+                            var datai = data.recruitTypes[i];
+                            html += '<li data-id="'+datai.id+'"><span>'+datai.typeName+'</span></li>'
+                        }
+                        $('#categoryNavUl').html(html);
+                        funOb.onQ()
+                    }
+                })
+            },
+            initControl:function(){
+                $(document).on('click','#categoryNavUl > li > span',function(){
+                    recruitType = $(this).parent().attr('data-id');
+                    funOb.changeUrl(1)
+                })
+                $(document).on('click','.recruit-dl',function(){
+                    var $this = $(this);
+                    if($this.hasClass('cur')){
+                        $this.find('.recruit-dd').slideUp(300,function(){
+                            $this.removeClass('cur');
+                        })
+                    }else{
+                        $this.addClass('cur');
+                        $this.find('.recruit-dd').slideDown(300)
+                    }
+                });
+                $(document).on('click','.dt-close',function(){
+                    var $this = $(this).parents('.recruit-dl');
+                    $this.find('.recruit-dd').slideUp(300,function(){
+                        $this.removeClass('cur');
+                    })
+                });
+            },
+            onQ:function(){
+                Q.reg(/singlePage\/\?(.*)/, function (paraStr) { //正则表达式注册URL，访问匹配该正则表达式的URL时，就会触发回调，在回调中我们修改页面DOM实现无刷新变换内容，para为查询参数字符串
+                    var tempData = formatterSerialize(paraStr);
+                    if(tempData.hasOwnProperty("t")){
+                        delete tempData["t"];
+                    }
+                    funOb.onSetParam(tempData); //根据url参数设置UI界面
+                    $.ajax({
+                        url: ROOT_PATH+"officialWebsite/recruitList",
+                        dataType:'jsonp',
+                        jsonp:"callback",
+                        jsonpCallback:"getRecruitListCallback",
+                        data: tempData,
+                        success: function (data) {
+                            if (data.status) {
+                                var dataList = data.dataList;
+                                if(dataList.length>0){
+                                    var tpl = _.template($("#listTpl").html());
+                                    $("#recruitList").html(tpl({"datas": dataList}));
+                                    $("body,html").scrollTop(0)
+                                }else if(dataList.length==0){
+                                    $("#recruitList").html("<div style='text-align: center;padding:100px 0 0;color:#999;'>暂无内容！</div>");
+                                }
+                                $("#recruitList").removeClass("data-loading")
+
+                                funOb.renderPagination(data);  //展示分页数据
+                            }
+                        },
+                    })
+                });
+
+                Q.init({
+                    index: 'singlePage/?' + $.param({"pageNum":'1',"pageSize": "3","recruitType": "-1"}) //首页地址
+                });
+            },
+            onGetParam:function(){
+                var pageNum = $("#pages").val();
+                var dataOb = {
+                    "pageNum":pageNum,
+                    "pageSize":"3",
+                    "recruitType":recruitType
+                }
+                return dataOb;
+            },
+            onSetParam:function(obj){
+                var liArr = $('#categoryNavUl li');
+                for(var i=0;i<liArr.length;i++){
+                    if($(liArr[i]).attr('data-id')==obj.recruitType){
+                        liArr.removeClass('cur')
+                        $(liArr[i]).addClass('cur')
+                    }
+                }
+            },
+            initPaginationControl: function () {
+
+            },
+            changeUrl: function (pageNum,t) {  //改变URL，触发Q.js回调函数
+                var dataOb = funOb.onGetParam();
+                dataOb.pageNum = pageNum;
+                var urlStr = t ? "singlePage/?"+$.param(dataOb)+"&t="+t : "singlePage/?"+$.param(dataOb);
+                Q.go(urlStr);
+            },
+            renderPagination: function (data) {
+                var pageNum,
+                    currentPage = data.currentPage,
+                    totalPage = data.totalPage;
+
+                if (currentPage > totalPage) {//当前页码大于总页码
+                    $("#pages").val(totalPage);
+                    funOb.changeUrl(totalPage);
+                } else {
+                    $("#pages").val(currentPage);
+                }
+
+                $("#totalPage").val(totalPage);
+
+                //加载页码
+                funOb.pageLoad(currentPage, totalPage);
+
+                //绑定事件
+                //点击首页，上一页，下一页，首页， 尾页，查询分页数据
+                $('#J_Pagination').on('click', '.page-item', function () {
+                    var pNum = parseInt($(this).text());
+                    funOb.changeUrl(pNum);
+                }).on('click', '#firstPage', function () {
+                    funOb.changeUrl(1);
+                }).on('click', '#prevPage', function () {
+                    if (currentPage != "" && currentPage > 1) {
+                        pageNum = currentPage - 1;
+                        funOb.changeUrl(pageNum);
+                    }
+                }).on('click', '#nextPage', function () {
+                    if (currentPage != "" && currentPage < totalPage) {
+                        pageNum = currentPage + 1;
+                        funOb.changeUrl(pageNum);
+                    }
+                }).on('click', '#lastPage', function () {
+                    funOb.changeUrl(parseInt($("#totalPage").val()));
+                })
+            },
+            pageLoad: function (curPage, totalPage) {//分页加载
+                var maxNum = 10,//页码显示个数
+                    prevNum = 2,//当前页之前页码的显示数
+                    nextNum = maxNum - prevNum - 1,//当前页之后页码的显示数
+                    pageHtml = '';
+                if (curPage > 1) {
+                    pageHtml += '<a id="prevPage" href="javascript:;"> « </a><a id="firstPage" href="javascript:;">首页</a>';
+                }
+                for (var i = 1; i <= totalPage; i++) {
+                    if (i == curPage) {//当前页码
+                        pageHtml += '<a class="page-item active" href="javascript:void(0)">' + i + '</a>';
+                    } else {
+                        if (totalPage > maxNum) {//总页码数大于最大显示数
+                            if (curPage <= prevNum && i <= maxNum) {//当前页之后的页码补全至最大显示数
+                                pageHtml += '<a class="page-item" href="javascript:void(0)" >' + i + '</a>';
+                            } else if (totalPage - curPage < nextNum && i >= totalPage - maxNum + 1) {//当前页之前的页码补全至最大显示数
+                                pageHtml += '<a class="page-item" href="javascript:void(0)" >' + i + '</a>';
+                            } else if ((i < curPage && i >= curPage - prevNum) || i > curPage && i <= nextNum + curPage) {//按配置输出当前页的前后页码
+                                pageHtml += '<a class="page-item" href="javascript:void(0)" >' + i + '</a>';
+                            }
+                        } else {//总页码数小于等于最大显示数时，输出所有页码
+                            pageHtml += '<a class="page-item" href="javascript:void(0)" >' + i + '</a>';
+                        }
+                    }
+                }
+                if (totalPage > curPage) {
+                    pageHtml += '<a id="lastPage" href="javascript:;">尾页</a><a id="nextPage" href="javascript:;"> » </a>';
+                }
+                $('#J_Pagination').html(pageHtml);
+            },
+        }
+
+        funOb.initData()
+        funOb.initControl()
     })
 </script>
 </body>

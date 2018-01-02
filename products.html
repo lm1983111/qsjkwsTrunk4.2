@@ -15,7 +15,7 @@
     <![endif]-->
 
 </head>
-<body>
+<body class="products-page">
 <div class="header">
     <header class="header-wrap">
         <div class="container clearfix">
@@ -31,7 +31,59 @@
     </header>
 </div>
 <div class="page-con-wrap">
-
+    <section class="common-banner"></section>
+    <section class="news-crumbs">
+        <p class="container crumbs-p">您的位置：
+            <router-link to="/home">首页</router-link>
+            > <span class="red">产品中心</span></p>
+    </section>
+    <section class="category-nav clearfix">
+        <ul class="container category-nav-ul">
+            <li class="cur">
+                <span>全部</span>
+            </li>
+        </ul>
+    </section>
+    <section class="products-list-section clearfix">
+        <div class="container">
+            <a href="products-tonometer.html" class="products-item" target="_blank">
+                <div class="products-img">
+                    <img src="src/images/products01.jpg"/>
+                </div>
+                <div class="products-block">
+                    <div class="products-info">
+                        <div class="title">智能动态血压计</div>
+                        <div class="spec">型号：<span>BPM07</span></div>
+                    </div>
+                    <div class="products-arrow"></div>
+                </div>
+            </a>
+            <a href="products-watch.html" class="products-item" target="_blank">
+                <div class="products-img">
+                    <img src="src/images/products02.jpg"/>
+                </div>
+                <div class="products-block">
+                    <div class="products-info">
+                        <div class="title">智能动态血压计</div>
+                        <div class="spec">型号：<span>BPM07</span></div>
+                    </div>
+                    <div class="products-arrow"></div>
+                </div>
+            </a>
+            <a href="products-gene.html" class="products-item" target="_blank">
+                <div class="products-img">
+                    <img src="src/images/products03.jpg"/>
+                </div>
+                <div class="products-block">
+                    <div class="products-info">
+                        <div class="title">智能动态血压计</div>
+                        <div class="spec">型号：<span>BPM07</span></div>
+                    </div>
+                    <div class="products-arrow"></div>
+                </div>
+            </a>
+        </div>
+    </section>
 </div>
 <div class="footer">
     <div class="container clearfix">
@@ -64,7 +116,7 @@
 <script src="./src/js/require.js"></script>
 <script src="./src/js/main.js"></script>
 <script>
-    require(['jquery','swiper'],function($,swiper){
+    require(['jquery','common'],function($){
     })
 </script>
 </body>

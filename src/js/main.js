@@ -1,5 +1,6 @@
-var version_date="20171121";
-var ROOT_PATH="http://system.kf.chinasunhospital.com/";
+var version_date="20171121055";
+//var ROOT_PATH="http://system.kf.chinasunhospital.com/";
+var ROOT_PATH="http://192.168.3.9:8081/";
 require.config({
     urlArgs: "v="+version_date,
     baseUrl:"src/js",
@@ -8,11 +9,16 @@ require.config({
         'underscore': 'lib/underscore-min',
         "jquery" : "lib/jquery.min",
         "bootstrap" : "lib/bootstrap.min",
-        "moment" : "lib/moment.min",
-        "swiper" : "lib/swiper.jquery.min",
+        //"swiper" : "lib/swiper.min",
+        "swiper" : "lib/idangerous.swiper.min",
         "q" : "lib/q",
+
+        "common":"chnsun/common",
     },
     shim : {
+        common:{
+            deps : ['jquery'],
+        },
         underscore:{
             exports : '_'
         },

@@ -31,7 +31,13 @@
     </header>
 </div>
 <div class="page-con-wrap">
-
+    <div class="container data-loading">
+        <div class="news-detail-header">
+            <div class="news-detail-title" id="newsDetailTitle"></div>
+            <div>发布时间：<span id="pubTime"></span></div>
+        </div>
+        <div class="news-detail-content" id="newsDetailContent"></div>
+    </div>
 </div>
 <div class="footer">
     <div class="container clearfix">
@@ -64,7 +70,47 @@
 <script src="./src/js/require.js"></script>
 <script src="./src/js/main.js"></script>
 <script>
-    require(['jquery','swiper'],function($,swiper){
+    require(['jquery','common'],function($){
+        function returnSearchKeyVal(key){
+            var keyVal = ''
+            for(var i = 0; i<location.search.split("?")[1].split('&').length;i++){
+                var datai = location.search.split("?")[1].split('&')[i]
+                if(datai.split("=")[0] == key){
+                    keyVal = datai.split("=")[1]
+                    break
+                }
+            }
+            return keyVal;
+        }
+
+        var formatterDateZg = function (d) {
+            var datetime;
+            if(d!=null && d!=""){
+                var date = new Date(d);
+                datetime = date.getFullYear() + "-" // "年"
+                    + ((date.getMonth() + 1) >= 10 ? (date.getMonth() + 1) : "0" + (date.getMonth() + 1)) + "-" // "月"
+                    + (date.getDate() < 10 ? "0" + date.getDate() : date.getDate());
+            }else{
+                datetime="";
+            }
+            return datetime;
+        };
+
+        $.ajax({
+            url: ROOT_PATH+"officialWebsite/newsDetail",
+            dataType:'jsonp',
+            jsonp:"callback",
+            jsonpCallback:"getNewsTypeCallback",
+            data: {"id":returnSearchKeyVal('id')},
+            success: function(data){
+                if(data.status){
+                    var news = data.news;
+                    $('#newsDetailTitle').html(news.title)
+                    $('#newsDetailContent').html(news.content)
+                    $('#pubTime').html(formatterDateZg(news.createTime))
+                }
+            }
+        })
     })
 </script>
 </body>
